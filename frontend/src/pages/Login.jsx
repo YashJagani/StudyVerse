@@ -19,24 +19,55 @@ const Login = () => {
 
   const [
     registerUser,
-    {
-      data: registerData,
-      error: registerError,
-      isLoading: registerIsLoading,
-      isSuccess: registerIsSuccess,
-    },
+    { data: registerData, error: registerError, isSuccess: registerIsSuccess },
   ] = useRegisterUserMutation();
   const [
     loginUser,
-    {
-      data: loginData,
-      error: loginError,
-      isLoading: loginIsLoading,
-      isSuccess: loginIsSuccess,
-    },
+    { data: loginData, error: loginError, isSuccess: loginIsSuccess },
   ] = useLoginUserMutation();
 
   const navigate = useNavigate();
+
+  // reset the form data after signup
+  const resetFormData = () => {
+    setSignupInput({ name: "", email: "", password: "" });
+    setLoginInput({ email: "", password: "" });
+  };
+
+  // validations for all the fields
+  const validateForm = (inputData, type) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (Object.values(inputData).some((field) => !field.trim())) {
+      toast.error("All fields are required.", {
+        style: { color: "red" },
+      });
+      return false;
+    }
+
+    if (!emailRegex.test(inputData.email)) {
+      toast.error("Invalid email address.", {
+        style: { color: "red" },
+      });
+      return false;
+    }
+
+    if (inputData.password.length < 8) {
+      toast.error("Password must be 8 characters or long.", {
+        style: { color: "red" },
+      });
+      return false;
+    }
+
+    if (type === "signup" && !inputData.name.trim()) {
+      toast.error("Name is required.", {
+        style: { color: "red" },
+      });
+      return false;
+    }
+
+    return true;
+  };
 
   const changeInputHandler = (e, type) => {
     const { name, value } = e.target;
@@ -49,40 +80,60 @@ const Login = () => {
 
   const handleRegistration = async (type) => {
     const inputData = type === "signup" ? signupInput : loginInput;
+    if (!validateForm(inputData, type)) return;
+
     const action = type === "signup" ? registerUser : loginUser;
     await action(inputData);
   };
 
+  const handleKeyDown = (e, type) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleRegistration(type);
+    }
+  };
+
   useEffect(() => {
     if (registerIsSuccess && registerData) {
-      toast.success(registerData.message || "Signup successful.");
+      toast.success(registerData.message || "registration successful.", {
+        style: { color: "green" },
+      });
+      resetFormData();
+    } else if (registerError && !registerIsSuccess) {
+      toast.error(registerError.data.message || "registration failed.", {
+        style: { color: "red" },
+      });
     }
-    if (registerError) {
-      toast.error(registerError.data.message || "Signup Failed");
-    }
+
     if (loginIsSuccess && loginData) {
-      toast.success(loginData.message || "Login successful.");
+      toast.success(loginData.message || "login successful.", {
+        style: { color: "green" },
+      });
+      resetFormData();
       navigate("/");
-    }
-    if (loginError) {
-      toast.error(loginError.data.message || "Login Failed");
+    } else if (loginError && !loginIsSuccess) {
+      toast.error(loginError.data.message || "login failed", {
+        style: { color: "red" },
+      });
     }
   }, [
-    loginIsLoading,
-    registerIsLoading,
-    loginData,
-    registerData,
-    loginError,
-    registerError,
     registerIsSuccess,
+    registerError,
+    registerData,
     loginIsSuccess,
+    loginError,
+    loginData,
     navigate,
   ]);
+
+  useEffect(() => {
+    resetFormData();
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-300">
       <div className="flex w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden bg-white border border-gray-200">
-        {/* Left Side - Illustration */}
+        {/* studyverse image in the form */}
         <div className="w-1/2 bg-gray-100 relative">
           <img
             src={coverImage}
@@ -92,22 +143,15 @@ const Login = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-white/70 to-transparent" />
         </div>
 
-        {/* Right Side - Form */}
+        {/* right side of the form */}
         <div className="w-1/2 p-10 flex flex-col justify-center bg-gray-50 rounded-r-lg shadow-inner">
-          <h2
-            className={`text-3xl font-bold text-center text-gray-800 mb-4 transition-transform duration-500 ${
-              isSignup
-                ? "translate-y-0 opacity-100"
-                : "translate-y-0 opacity-100"
-            }`}
-          >
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">
             {isSignup ? "Create an Account" : "Welcome Back"}
           </h2>
-          <p className="text-center text-gray-500 mb-6 transition-opacity duration-500">
+          <p className="text-center text-gray-500 mb-6">
             {isSignup ? "Create an account." : "Login into your account."}
           </p>
 
-          {/* Toggle Button */}
           <div className="w-80 flex justify-center mb-6">
             <button
               onClick={() => setIsSignup(false)}
@@ -131,7 +175,7 @@ const Login = () => {
             </button>
           </div>
 
-          {/* Form Sliding Effect */}
+          {/* animation */}
           <div className="relative overflow-hidden h-[300px]">
             <div
               className={`absolute w-full transition-all duration-700 ${
@@ -140,12 +184,12 @@ const Login = () => {
                   : "translate-x-0 opacity-100"
               }`}
             >
-              {/* Login Form */}
-              <form className="space-y-5">
+              {/* login form */}
+              <form className="space-y-5" onKeyDown={(e) => handleKeyDown(e, "login")}>
                 <div className="relative w-full">
                   <label
                     htmlFor="email"
-                    className="block mx-1 text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Email
                   </label>
@@ -157,13 +201,13 @@ const Login = () => {
                     onChange={(e) => changeInputHandler(e, "login")}
                     placeholder="name@gmail.com"
                     required
-                    className="w-80 mx-1 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40 bg-white"
+                    className="w-80 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40 bg-white"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="password"
-                    className="block mx-1 text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Password
                   </label>
@@ -175,20 +219,8 @@ const Login = () => {
                     onChange={(e) => changeInputHandler(e, "login")}
                     placeholder="password"
                     required
-                    className="w-80 mx-1 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40 box-border"
+                    className="w-80 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40 box-border"
                   />
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="form-checkbox h-4 w-4 text-black"
-                    />
-                    <span className="ml-2 mx-1 text-gray-600">Remember me</span>
-                  </label>
-                  <a href="/" className="text-black hover:underline mr-10">
-                    Forgot password?
-                  </a>
                 </div>
                 <button
                   type="button"
@@ -200,7 +232,7 @@ const Login = () => {
               </form>
             </div>
 
-            {/* Signup Form */}
+            {/* signup form */}
             <div
               className={`absolute w-full transition-all duration-700 ${
                 isSignup
@@ -208,11 +240,11 @@ const Login = () => {
                   : "translate-x-full opacity-0"
               }`}
             >
-              <form className="space-y-4">
+              <form className="space-y-4" onKeyDown={(e) => handleKeyDown(e, "signup")}>
                 <div>
                   <label
                     htmlFor="name"
-                    className="block mx-1 text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700"
                   >
                     Name
                   </label>
@@ -224,13 +256,13 @@ const Login = () => {
                     onChange={(e) => changeInputHandler(e, "signup")}
                     placeholder="name"
                     required
-                    className="w-80 mx-1 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40"
+                    className="w-80 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="email"
-                    className="block mx-1 text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Email
                   </label>
@@ -242,13 +274,13 @@ const Login = () => {
                     onChange={(e) => changeInputHandler(e, "signup")}
                     placeholder="name@gmail.com"
                     required
-                    className="w-80 mx-1 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40"
+                    className="w-80 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="password"
-                    className="block mx-1 text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700"
                   >
                     Password
                   </label>
@@ -260,7 +292,7 @@ const Login = () => {
                     onChange={(e) => changeInputHandler(e, "signup")}
                     placeholder="password"
                     required
-                    className="w-80 mx-1 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40"
+                    className="w-80 px-4 py-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-black/40"
                   />
                 </div>
                 <button
