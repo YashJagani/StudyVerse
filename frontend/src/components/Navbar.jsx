@@ -26,9 +26,25 @@ import {
 import logo from "../assets/logo.png";
 
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useLogoutUserMutation } from "@/features/api/authApi";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useSelector } from "react-redux";
 const Navbar = () => {
-  const user = true;
+  const { user } = useSelector((store) => store.auth);
+  const navigate = useNavigate();
+  const [logoutUser, { data, isSuccess }] = useLogoutUserMutation();
+  const logoutHandler = async () => {
+    await logoutUser();
+  };
+  console.log(user);
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success(data.message || "User Logout!");
+      navigate("/login");
+    }
+  }, [isSuccess]);
 
   return (
     <div className="h-16 dark:bg-[#020817] bg-white border-b dark:border-b-gray-800 border-b-gray-200 fixed top-0 left-0 right-0 duration-300 z-10">
@@ -52,7 +68,12 @@ const Navbar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src="https://imgs.search.brave.com/ULdUqCYl85mL4y5vUutulLJAS7dxYXur9W2TvaKEDLI/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9hdmF0/YXIuaXJhbi5saWFy/YS5ydW4vcHVibGlj/LzE0.jpeg" />
+                  <AvatarImage
+                    src={
+                      user?.photoUrl ||
+                      "https://imgs.search.brave.com/ULdUqCYl85mL4y5vUutulLJAS7dxYXur9W2TvaKEDLI/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9hdmF0/YXIuaXJhbi5saWFy/YS5ydW4vcHVibGlj/LzE0.jpeg"
+                    }
+                  />
                   <AvatarFallback>Avatar</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
@@ -60,19 +81,34 @@ const Navbar = () => {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem><Link to="my-learning"> My Learning</Link></DropdownMenuItem>
-                  <DropdownMenuItem><Link to="profile"> Edit Profile</Link></DropdownMenuItem>
-                  <DropdownMenuItem>Logout</DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="my-learning"> My Learning</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="profile"> Edit Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logoutHandler}>
+                    Logout
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem>Dashboard </DropdownMenuItem>
+                {user?.role === "instructor" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <Link to="/admin/dashboard">Dashboard</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="flex item-center gap-2">
-              <Button variant="outline">Login</Button>
-              <Button variant="outline">Signup</Button>
+              <Button variant="outline" onClick={() => navigate("/login")}>
+                Login
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/signup")}>
+                Signup
+              </Button>
             </div>
           )}
           <DarkMode />

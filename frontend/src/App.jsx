@@ -6,6 +6,10 @@ import Login from "./pages/Login";
 import Courses from "./pages/client/Courses";
 import MyLearning from "./pages/client/mylearning";
 import Profile from "./pages/client/Profile";
+import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP";
+import ResetPassword from "./pages/ResetPassword";
 
 const appRouter = createBrowserRouter([
   {
@@ -26,12 +30,28 @@ const appRouter = createBrowserRouter([
         element: <Login />,
       },
       {
+        path: "/signup",
+        element: <Signup />,
+      },
+      {
         path: "/my-learning",
         element: <MyLearning />,
       },
       {
         path: "/profile",
         element: <Profile />,
+      },
+      {
+        path: "/forgot-password",
+        element: <ForgotPassword />,
+      },
+      {
+        path: "/verify-otp",
+        element: <VerifyOTP />,
+      },
+      {
+        path: "/reset-password",
+        element: <ResetPassword />,
       },
     ],
   },
